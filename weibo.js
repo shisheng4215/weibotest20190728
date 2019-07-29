@@ -1,9 +1,10 @@
 var express = require('express');
-var handlebars = require('express-handlebars').create({defaultLayout:'main'});
+var handlebars = require('express-handlebars').create({defaultLayout:'main',extname:'.hbs'});
 var app = express();
+require('body-parser');
 
-app.engine('handlebars',handlebars.engine);
-app.set('view engine','handlebars');
+app.engine('.hbs',handlebars.engine);
+app.set('view engine','.hbs');
 
 app.set('port',process.env.PORT || 3000);
 
@@ -22,6 +23,18 @@ app.get('/',function(req,res) {
 app.get('/about',function(req,res) {
 	res.render('about')
 });
+
+var tours =[
+			{id:0,name:'Hood River',price:99.99},
+			{id:1,name:'Oregon Coast',price:149.95},
+		];
+		
+app.get('/api/tours',function(req,res) {
+	res.json(tours);
+});
+
+
+
 
 //定制404页面
 app.use(function(req,res) {
