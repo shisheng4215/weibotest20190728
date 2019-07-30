@@ -7,6 +7,9 @@ var morgan = require('morgan');
 var mongoose = require('mongoose');
 var opts = {useNewUrlParser:true};
 var Vacation = require('./models/vacation.js');
+var VacationInSeasonListener = require('./models/vacationInSeasonListener.js');
+var User = require('./models/user.js');
+var bodyParser = require('body-parser');
 
 //连接数据库
 mongoose.connect(credentials.mongo.connectionString,opts);
@@ -16,7 +19,7 @@ app.set('view engine','.hbs');
 
 app.set('port',process.env.PORT || 3000);
 
-app.use(require('body-parser')());
+app.use(bodyParser.urlencoded({extended:false}));
 app.use(require('cookie-parser')(credentials.cookieSecret));
 app.use(morgan('short'));
 app.use(function(req,res,next) {
@@ -78,6 +81,42 @@ app.get('/vacations',function(req,res) {
 	});
 
 });
+
+
+app.get('/notify-me-when-in-season',function(req,res) {
+	res.render('notify-me-when-in-season',{sku:req.query.sku});
+});
+
+app.post('/notify-me-when-in-season',function(req,res) {
+	VacationInSeasonListener.update(
+		{email:req.body.email},
+		{$push:{skus:req.body.sku}},
+		{upsert:true},
+		function(err){
+			if(err)
+				console.error(err.stack);
+			return res.redirect(303,'/vacations');
+		}
+
+	)
+});
+
+app.get('/create-user',function(req,res) {
+	res.render('create-user');
+});
+
+
+app.post('/create-user',function(req,res) {
+	new User({
+		userName:req.body.userName,
+		name:req.body.name,
+		email:req.body.email,
+	}).save();
+	
+	res.redirect(303,'/thank-you');
+
+});
+
 
 //定制404页面
 app.use(function(req,res) {

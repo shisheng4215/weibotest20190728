@@ -1,0 +1,20 @@
+<div class="formContainer">
+	<form class="form-horizontal" action="/create-user" method="POST">
+		<div class="form-group">
+			<label for="fieldUserName" class="col-sm-2 control-label">用户名: </label>
+			<input type="text" class="form-control" id="fieldUserName" name="userName" required>
+		</div>
+		<div class="form-group">
+			<label for="fieldName" class="form-control">姓  名 :</label>
+			<input type="text" class="form-control" id="fieldName" name="name" required>
+		</div>
+		
+		<div class="form-group">
+			<label for="fieldEmail" class="form-control">邮 箱 :</label>
+			<input type="email" class="form-control" id="fieldEmail" required name="email">
+		</div>
+		<div>
+			<button type="submit" class="btn btn-default">Submit</button>
+		</div>
+	</form>
+</div>
