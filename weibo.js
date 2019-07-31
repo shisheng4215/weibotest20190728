@@ -10,6 +10,8 @@ var Vacation = require('./models/vacation.js');
 var VacationInSeasonListener = require('./models/vacationInSeasonListener.js');
 var User = require('./models/user.js');
 var bodyParser = require('body-parser');
+var session = require('express-session');
+var MongoStore = require('connect-mongo')(session);
 
 //连接数据库
 mongoose.connect(credentials.mongo.connectionString,opts);
@@ -29,12 +31,23 @@ app.use(function(req,res,next) {
 		next();
 });
 
+app.use(session({
+
+	store:new MongoStore({mongooseConnection:mongoose.connection})
+	
+}));
+
 //静态资源目录
 app.use(express.static(__dirname+'/public'))
 
 //路由
 app.get('/',function(req,res) {
-	res.render('home');
+
+	var context={
+		userName:req.session.userName,
+	}
+	console.log(context);
+	res.render('home',context);
 });
 
 app.get('/about',function(req,res) {
@@ -65,7 +78,9 @@ app.get('/epic-fail',function(req,res) {
 
 app.get('/vacations',function(req,res) {
 	Vacation.find({available:true},function(err,vacations) {
+		var currency=req.session.currency||'USD';
 		var context = {
+			currency:currency,
 			vacations:vacations.map(function(vacation){
 				return{
 					sku:vacation.sku,
@@ -77,6 +92,12 @@ app.get('/vacations',function(req,res) {
 				}
 			})
 		};
+		console.log(currency);
+		switch(currency){
+			case 'USD': context.currencyUSD='selected';break;
+			case 'GBP': context.currencyGBP='selected';break;
+			case 'BTC': context.currencyBTC='selected';break;
+		}
 		res.render('vacations',context);
 	});
 
@@ -116,6 +137,48 @@ app.post('/create-user',function(req,res) {
 	res.redirect(303,'/thank-you');
 
 });
+
+app.get('/users',function(req,res) {
+	var id=1;
+	User.find(function(err,users) {
+		if(err) return console.log(err.stack);
+		var context = {
+			users:users.map(function(user){
+				return{
+					userName:user.userName,
+					name:user.name,
+					email:user.email,
+					id:user._id,
+				}
+			})
+		}
+		res.render('users',context);
+	});
+
+});
+
+app.get('/set-currency/:currency',function(req,res) {
+	req.session.currency=req.params.currency;
+	return res.redirect(303,'/vacations');
+});
+
+
+
+app.post('/login',function(req,res) {
+	var userName = req.body.userName;
+	var password = req.body.password;
+	//验证密码
+	
+	req.session.userName=userName;
+	res.redirect(303,'/');
+});
+
+
+
+
+
+require('./routes.js')(app);
+
 
 
 //定制404页面
